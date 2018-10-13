@@ -8,14 +8,24 @@ import java.util.stream.Collectors;
 import tws.keeper.model.Action;
 import tws.keeper.model.Position;
 
+/**
+ * Implementation of the well-known pathfinding A* algorithm
+ * 
+ * @author pedro
+ *
+ */
 public class StarAlgorithm {
 
 	private List<Node> visitedNodes;
 	private List<Node> open;
 	private List<Node> closed;
+	private ExploratoryAlgorithm observableUtils;
 
-	public StarAlgorithm() {
+	private static final String NO_PATH_FOUND = "No path to the target was found";
+	private static final String NO_NODES_VISITED = "None visited nodes";
 
+	public StarAlgorithm(ExploratoryAlgorithm mazeUtils) {
+		this.observableUtils = mazeUtils;
 	}
 
 	/**
@@ -28,16 +38,16 @@ public class StarAlgorithm {
 	 * @param doorPosition
 	 * @return
 	 */
-	public List<Action> createPath(Position keeperPosition, List<Trace> pheromoneTrack, Position doorPosition) {
+	public List<Action> createPath() {
 		// Start node
-		Node startNode = new Node(keeperPosition, Action.DO_NOTHING);
+		Node startNode = new Node(observableUtils.getMaze().getKeeperPosition(), Action.DO_NOTHING);
 
 		// Target node
-		Node targetNode = new Node(doorPosition, Action.DO_NOTHING);
+		Node targetNode = new Node(observableUtils.getDoorPosition(), Action.DO_NOTHING);
 
 		// Converting pheromoneTrack into a list of Node objects
-		visitedNodes = pheromoneTrack.stream().map(trace -> new Node(trace.getPosition(), Action.DO_NOTHING))
-				.collect(Collectors.toList());
+		visitedNodes = observableUtils.getVisitedPositions().stream()
+				.map(position -> new Node(position, Action.DO_NOTHING)).collect(Collectors.toList());
 
 		// The set of nodes to be evaluated
 		open = new ArrayList<Node>();
@@ -63,7 +73,7 @@ public class StarAlgorithm {
 			}
 
 			// Get current' neighbours
-			List<Node> nodes = possibleActions(currentNode);
+			List<Node> nodes = possibleActions(currentNode, observableUtils.getAvailableActions());
 
 			nodes.stream().forEach(neighbourNode -> {
 				// Go to next if neighbour is not traversal or is in the closed list
@@ -92,7 +102,7 @@ public class StarAlgorithm {
 			});
 		}
 
-		throw new IllegalStateException("No path to the target was found");
+		throw new IllegalStateException(NO_PATH_FOUND);
 	}
 
 	/**
@@ -122,14 +132,14 @@ public class StarAlgorithm {
 	 * @param current
 	 * @return
 	 */
-	private List<Node> possibleActions(Node current) {
+	private List<Node> possibleActions(Node current, List<Action> availableActions) {
 		if (visitedNodes == null) {
-			throw new IllegalStateException("None visited nodes");
+			throw new IllegalStateException(NO_NODES_VISITED);
 		}
 
 		List<Node> possibleActions = new ArrayList<Node>();
 
-		KeeperAI.availableActions.stream().forEach(action -> updatePossibleActions(current, possibleActions, action));
+		availableActions.stream().forEach(action -> updatePossibleActions(current, possibleActions, action));
 
 		return possibleActions;
 	}
@@ -142,7 +152,7 @@ public class StarAlgorithm {
 	 * @param action
 	 */
 	private void updatePossibleActions(Node current, List<Node> possibleActions, Action action) {
-		Position positionAfterAction = ObservableUtils.positionAfterAction(action, current.getPosition());
+		Position positionAfterAction = MazeUtils.positionAfterAction(action, current.getPosition());
 		boolean positionAfterActionVisited = visitedNodes.stream().map(Node::getPosition)
 				.anyMatch(positionAfterAction::equals);
 		if (positionAfterActionVisited) {

@@ -3,9 +3,21 @@ package tws.keeper.solution;
 import tws.keeper.model.Action;
 import tws.keeper.model.Position;
 
+/**
+ * This class is used by A* algorithm to store basic data for this algorithm
+ * such as the G cost, H cost, parent node and position of each node in the map.
+ * Also we have added action associated for arriving this node so we can
+ * retrieve from the A* algorithm directly the actions, not the nodes to go to.
+ * 
+ * @author pedro
+ *
+ */
 public class Node {
-	private final Position position;
+	// Added to retrieve actions from A* instead of nodes
 	private Action actionAssociated;
+
+	// A* specific variables
+	private final Position position;
 	private Node parent;
 	private Double gCost = 0.0; // Cost from starting node to current node
 	private Double hCost = 0.0; // Cost from this node to final node
